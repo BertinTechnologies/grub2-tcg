@@ -314,6 +314,8 @@ kernel = {
   extra_dist = kern/i386/realmode.S;
   extra_dist = boot/i386/pc/lzma_decode.S;
   extra_dist = kern/mips/cache_flush.S;
+
+  i386_pc = kern/i386/pc/tpmapi.c;
 };
 
 program = {
@@ -2295,4 +2297,95 @@ module = {
   common = loader/i386/xen_file32.c;
   common = loader/i386/xen_file64.c;
   extra_dist = loader/i386/xen_fileXX.c;
+};
+
+library = {
+  name = libtss.a;
+  common = opendtex/libtss/tcs_pbg.c;
+  common = opendtex/libtss/tcs_utils.c;
+  common = opendtex/libtss/tcs_key.c;
+  common = opendtex/libtss/tcs_random.c;
+  common = opendtex/libtss/store_key.c;
+  common = opendtex/libtss/tcsi_pcr.c;
+  common = opendtex/libtss/tcsi_auth.c;
+  common = opendtex/libtss/tcsi_key.c;
+  common = opendtex/libtss/tcsi_seal.c;
+  cflags = '$(CFLAGS_POSIX) $(CFLAGS_GNULIB)';
+  cppflags = '$(CPPFLAGS_POSIX) $(CPPFLAGS_GNULIB)';
+  condition = COND_TCG;
+};
+
+library = {
+  name = libtxt.a;
+  common = opendtex/libtxt/txt.c;
+  common = opendtex/libtxt/heap.c;
+  common = opendtex/libtxt/errors.c;
+  common = opendtex/libtxt/mtrrs.c;
+  common = opendtex/libtxt/acmod.c;
+  common = opendtex/libtxt/verify.c;
+  common = opendtex/libtxt/vmcs.c;
+  //common = opendtex/libtxt/common/boot.S;
+  common = opendtex/libtxt/common/mutex.S;
+  common = opendtex/libtxt/common/hash.c;
+  //common = opendtex/libtxt/common/printk.c;
+  common = opendtex/libtxt/common/vsprintf.c;
+  common = opendtex/libtxt/common/com.c;
+  common = opendtex/libtxt/common/cmdline.c;
+  common = opendtex/libtxt/common/vga.c;
+  common = opendtex/libtxt/common/e820.c;
+  common = opendtex/libtxt/common/pci_cfgreg.c;
+  common = opendtex/libtxt/common/tboot.c;
+  common = opendtex/libtxt/common/tpm.c;
+  common = opendtex/libtxt/common/sha1.c;
+  common = opendtex/libtxt/common/acpi.c;
+  common = opendtex/libtxt/common/misc.c;
+  common = opendtex/libtxt/common/integrity.c;
+  common = opendtex/libtxt/common/vmac.c;
+  common = opendtex/libtxt/common/paging.c;
+  common = opendtex/libtxt/common/policy.c;
+  common = opendtex/libtxt/common/loader.c;
+  common = opendtex/libtxt/common/tb_error.c;
+  common = opendtex/libtxt/common/rijndael.c;
+  common = opendtex/libtxt/common/linux.c;
+  common = opendtex/libtxt/common/elf.c;
+  //common = opendtex/libtxt/common/memcmp.c;
+  //common = opendtex/libtxt/common/memcpy.c;
+  //common = opendtex/libtxt/common/strncpy.c;
+  //common = opendtex/libtxt/common/strcmp.c;
+  //common = opendtex/libtxt/common/strncmp.c;
+  //common = opendtex/libtxt/common/strlen.c;
+  //common = opendtex/libtxt/common/strtoul.c;
+  cflags = '$(CFLAGS_POSIX) $(CFLAGS_GNULIB) -Wno-pointer-arith -Wno-strict-aliasing';
+  cppflags = '$(CPPFLAGS_POSIX) $(CPPFLAGS_GNULIB) -Wno-pointer-arith -Wno-strict-aliasing';
+  condition = COND_TCG;
+};
+
+module = {
+  name = txtutils;
+  common = opendtex/txtutils/txtutils.c;
+  //common = opendtex/txtutils/txtasm.S;
+  ldadd = libtxt.a;
+  cflags = '$(CFLAGS_POSIX) $(CFLAGS_GNULIB) -Wno-pointer-arith';
+  cppflags = '$(CPPFLAGS_POSIX) $(CPPFLAGS_GNULIB) -Wno-pointer-arith';
+  enable = i386_pc;
+  condition = COND_TCG;
+};
+
+module = {
+  name = tss;
+  ldadd = libtss.a;
+  ldadd = '$(LDADD_KERNEL)';
+  common = opendtex/tss/tss.c;
+  enable = i386_pc;
+  enable = noemu;
+  condition = COND_TCG;
+};
+
+module = {
+  name = tpmutils;
+  common = opendtex/tpmutils/tpmutils.c;
+  common = opendtex/tpmutils/vga_switch_mode.c;
+  //common = opendtex/txtutils/txtasm.S;
+  enable = i386_pc;
+  condition = COND_TCG;
 };

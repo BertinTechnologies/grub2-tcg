@@ -19,6 +19,10 @@
 #include <grub/symbol.h>
 #include <grub/machine/boot.h>
 
+#ifdef TCG
+#include <opendtex/tpm.h>
+#endif // TCG
+
 /*
  *  defines for the code go here
  */
@@ -141,6 +145,7 @@ LOCAL(setup_sectors):
 	jmp	LOCAL(copy_buffer)
 
 LOCAL(chs_mode):
+	#ifndef TCG
 	/* load logical sector start (top half) */
 	movl	4(%di), %eax
 	orl	%eax, %eax
@@ -243,6 +248,10 @@ LOCAL(chs_mode):
 
 	/* save source segment */
 	movw	%es, %bx
+	#else
+	MSG(chs_notsupported_error_string)
+	jmp	LOCAL(general_error)
+	#endif
 
 LOCAL(copy_buffer):
 
@@ -264,6 +273,12 @@ LOCAL(copy_buffer):
 
 	/* get the copy length */
 	shlw	$3, %ax
+	#ifdef TCG
+	movl 	$tcgsize, %ecx
+	movw 	%ax, (%ecx)
+	shll	$1, (%ecx)
+	xorl	%ecx, %ecx
+	#endif
 	movw	%ax, %cx
 
 	xorw	%di, %di	/* zero offset of destination addresses */
@@ -298,15 +313,65 @@ LOCAL(bootit):
 	/* print a newline */
 	MSG(notification_done)
 	popw	%dx	/* this makes sure %dl is our "boot" drive */
+
+        #ifdef TCG
+	pusha
+
+	/*
+	* BIOS Call "Int 1AH Function" to send a TPM operation.
+	*      Call with       %ax = 0xBB00h (TCG_StatusCheck)
+	*/
+	movw    	$0xbb00, %ax				// TCG_StatusCheck
+	int     	$0x1a
+	testl		%eax, %eax
+	jnz		1f
+	cmpl		$0x41504354, %ebx			// Check TCPA String
+	jnz		1f
+	cmpw		$0x0102, %cx
+	jnz		1f
+
+	/*
+	* BIOS call "INT 1Ah, (AH)=BBh,(AL)=07h" TCG_CompactHashLogExtendEvent
+	*	Call with	%ah = 0xBB
+	*			%al = 0x07
+	*			%es:%di = segment:offset of the data buffer to be hashed
+	*			%esi = Informative value
+	*			%ebx = 'TCPA'
+	*			%ecx = length of the data buffer to be hashed
+	*			%edx = PCR Index
+	*	Return:
+	*			%eax = TCG_STATUS
+	*/
+	movw    	$0xbb07, %ax								// TCG_CompactHashLogExtendEvent
+	xorl		%edi, %edi										// es is already set on the good segment
+	movl    	$TCG_GRUB_CODE_PCR_EVENTTYPE, %esi
+	movl 		$tcgsize, %ecx
+	movl 		(%ecx), %ecx								// data size
+	movl    	$TCG_GRUB_CODE_PCR_INDEX, %edx
+	int     	$0x1a
+	testl		%eax, %eax
+	jnz		LOCAL(tcg_error)
+1:
+	popa
+        #endif // TCG
+
 	ljmp	$0, $(GRUB_BOOT_MACHINE_KERNEL_ADDR + 0x200)
 
-
+#ifndef TCG
 /*
  * BIOS Geometry translation error (past the end of the disk geometry!).
  */
 LOCAL(geometry_error):
 	MSG(geometry_error_string)
 	jmp	LOCAL(general_error)
+#else
+/*
+ * TCG error
+ */
+LOCAL(tcg_error):
+	MSG(tcg_error_string)
+	jmp	LOCAL(general_error)
+#endif
 
 /*
  * Read error on the disk.
@@ -325,8 +390,15 @@ notification_string:	.asciz "loading"
 notification_step:	.asciz "."
 notification_done:	.asciz "\r\n"
 
+#ifndef TCG
 geometry_error_string:	.asciz "Geom"
+#endif
 read_error_string:	.asciz "Read"
+#ifdef TCG
+chs_notsupported_error_string:	.asciz "CHS"
+tcg_error_string:	.asciz "TCG ERR"
+tcgsize:	.long 0
+#endif
 general_error_string:	.asciz " Error"
 
 /*

@@ -36,6 +36,11 @@
 #include <grub/lib/cmdline.h>
 #include <grub/linux.h>
 
+#ifdef TCG
+#include <opendtex/tpm.h>
+#include <grub/term.h>
+#endif // TCG
+
 GRUB_MOD_LICENSE ("GPLv3+");
 
 #define GRUB_LINUX_CL_OFFSET		0x9000
@@ -458,6 +463,23 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
 
   lh->ramdisk_image = initrd_addr;
   lh->ramdisk_size = size;
+
+#ifdef TCG
+  {
+    grub_uint32_t res;
+
+#ifdef DEBUG
+    grub_printf ("Extended %s (%p : %x)...\n", argv[0], initrd_addr, size);
+    grub_getkey();
+#endif
+
+    res = TCG_HashLogExtendEvent((grub_uint8_t *) initrd_addr, size, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1);
+    if(res && (res != TCGERR_ERROR_NOTPM)) {
+      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n", (grub_uint8_t *) initrd_addr, size, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1, res);
+      grub_getkey();
+    }
+  }
+#endif // TCG
 
  fail:
   grub_initrd_close (&initrd_ctx);

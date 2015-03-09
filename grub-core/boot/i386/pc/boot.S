@@ -18,7 +18,12 @@
  */
 
 #include <grub/symbol.h>
+//#include <grub/boot.h>
 #include <grub/machine/boot.h>
+
+#ifdef TCG
+#include <opendtex/tpm.h>
+#endif // TCG
 
 /*
  *  defines for the code go here
@@ -28,6 +33,7 @@
 #define MSG(x)	movw $x, %si; call LOCAL(message)
 #define ERR(x)	movw $x, %si; jmp LOCAL(error_message)
 
+#ifndef TCG
 	.macro floppy
 part_start:
 
@@ -86,6 +92,7 @@ fd_probe_error_string:	.asciz "Floppy"
 
 	jmp	LOCAL(final_init)
 	.endm
+#endif // TCG
 
 	.macro scratch
 
@@ -168,11 +175,15 @@ start:
 	. = _start + GRUB_BOOT_MACHINE_BPB_START
 	. = _start + 4
 #endif
+#ifndef TCG
 #ifdef HYBRID_BOOT
 	floppy
 #else
 	scratch
 #endif
+#else // TCG
+	scratch
+#endif // TCG
 
 	. = _start + GRUB_BOOT_MACHINE_BPB_END
 	/*
@@ -317,6 +328,9 @@ lba_mode:
 	jmp	LOCAL(copy_buffer)
 
 LOCAL(chs_mode):
+        #ifdef TCG
+	ERR(chs_notsupported_error_string)
+	#else
 	/*
 	 *  Determine the hard disk geometry from the BIOS!
 	 *  We do this first, so that LS-120 IDE floppies work correctly.
@@ -334,7 +348,9 @@ LOCAL(chs_mode):
 
 	/* Nope, we definitely have a hard disk, and we're screwed. */
 	ERR(hd_probe_error_string)
+        #endif // TCG
 
+#ifndef TCG
 LOCAL(final_init):
 	/* set the mode to zero */
 	movzbl	%dh, %eax
@@ -428,6 +444,7 @@ setup_sectors:
 	jc	LOCAL(read_error)
 
 	movw	%es, %bx
+#endif // TCG
 
 LOCAL(copy_buffer):
 	/*
@@ -451,11 +468,62 @@ LOCAL(copy_buffer):
 	popw	%ds
 	popa
 
+        #ifdef TCG
+	pusha
+
+	/*
+	* BIOS Call "Int 1AH Function" to send a TPM operation.
+	*      Call with       %ax = 0xBB00h (TCG_StatusCheck)
+	*/
+	movw    	$0xbb00, %ax				// TCG_StatusCheck
+	int     	$0x1a
+	testl		%eax, %eax
+	jnz		2f
+	cmpl		$0x41504354, %ebx			// Check TCPA String
+	jnz		2f
+	cmpw		$0x0102, %cx
+	jnz		3f
+
+	/*
+	* BIOS call "INT 1Ah, (AH)=BBh,(AL)=07h" TCG_CompactHashLogExtendEvent
+	*	Call with	%ah = 0xBB
+	*			%al = 0x07
+	*			%es:%di = segment:offset of the data buffer to be hashed
+	*			%esi = Informative value
+	*			%ebx = 'TCPA'
+	*			%ecx = length of the data buffer to be hashed
+	*			%edx = PCR Index
+	*	Return:
+	*			%eax = TCG_STATUS
+	*/
+	movw    	$0xbb07, %ax								// TCG_CompactHashLogExtendEvent
+	movl		$GRUB_BOOT_MACHINE_KERNEL_ADDR, %edi	// es is already equal to 0
+	movl    	$TCG_GRUB_CODE_PCR_EVENTTYPE, %esi
+	movl    	$512, %ecx									// data size
+	movl    	$TCG_GRUB_CODE_PCR_INDEX, %edx
+	int     	$0x1a
+	testl		%eax, %eax
+	jnz		1f
+	MSG(tcg_ok_string)
+	jmp 		4f
+1:
+	ERR(tcg_error_string)
+	jmp 		4f
+2:
+	MSG(tcg_not_supported_string)
+	jmp 		4f
+3:
+	MSG(tcg_badversion_string)
+4:
+	popa
+        #endif // TCG
+
 	/* boot kernel */
 	jmp	*(kernel_address)
 
 /* END OF MAIN LOOP */
 
+#ifndef TCG
 /*
  * BIOS Geometry translation error (past the end of the disk geometry!).
  */
@@ -467,6 +535,7 @@ LOCAL(geometry_error):
  */
 LOCAL(read_error):
 	movw	$read_error_string, %si
+#endif // TCG
 LOCAL(error_message):
 	call	LOCAL(message)
 LOCAL(general_error):
@@ -479,9 +548,17 @@ LOCAL(stop):
 	jmp	LOCAL(stop)
 
 notification_string:	.asciz "GRUB "
+#ifndef TCG
 geometry_error_string:	.asciz "Geom"
 hd_probe_error_string:	.asciz "Hard Disk"
 read_error_string:	.asciz "Read"
+#else
+chs_notsupported_error_string:	.asciz "CHS"
+tcg_error_string:		.asciz "TCGERR"
+tcg_ok_string:			.asciz "TCGOK "
+tcg_not_supported_string:	.asciz "NOTPM "
+tcg_badversion_string:		.asciz "BADTPM "
+#endif
 general_error_string:	.asciz " Error\r\n"
 
 /*
@@ -530,11 +607,13 @@ nt_magic:
 
 	. = _start + GRUB_BOOT_MACHINE_PART_START
 
+#ifndef TCG
 #ifndef HYBRID_BOOT
 	floppy
 #else
 	scratch
 #endif
+#endif // TCG
 
 	. = _start + GRUB_BOOT_MACHINE_PART_END
 	

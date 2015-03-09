@@ -1613,6 +1613,19 @@ AC_SUBST(END_SYMBOL)
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
+AC_SUBST(enable_tcg)
+AC_ARG_ENABLE([tcg],
+		[AS_HELP_STRING([--enable-tcg],
+				[enable TCG Extensions])])
+if test x"$enable_tcg" = xyes ; then
+   TARGET_CFLAGS="$TARGET_CFLAGS -DTCG"
+   TARGET_ASFLAGS="$TARGET_ASFLAGS -DTCG"
+   TARGET_CCASFLAGS="$TARGET_CCASFLAGS -DTCG"
+   enable_tcg=yes
+else
+   enable_tcg=no
+fi
+
 AC_ARG_ENABLE([werror],
 	      [AS_HELP_STRING([--disable-werror],
                              [do not use -Werror when building GRUB])])
@@ -1721,6 +1734,8 @@ AM_CONDITIONAL([COND_ENABLE_CACHE_STATS], [test x$DISK_CACHE_STATS = x1])
 AM_CONDITIONAL([COND_ENABLE_BOOT_TIME_STATS], [test x$BOOT_TIME_STATS = x1])
 
 AM_CONDITIONAL([COND_HAVE_CXX], [test x$HAVE_CXX = xyes])
+
+AM_CONDITIONAL([COND_TCG], [test x$enable_tcg = xyes])
 
 AM_CONDITIONAL([COND_HAVE_ASM_USCORE], [test x$HAVE_ASM_USCORE = x1])
 AM_CONDITIONAL([COND_STARFIELD], [test "x$starfield_excuse" = x])

@@ -21,6 +21,11 @@
 #include <grub/parser.h>
 #include <grub/script_sh.h>
 
+#ifdef TCG
+#include <opendtex/tpm.h>
+#include <grub/term.h>
+#endif // TCG
+
 grub_err_t
 grub_normal_parse_line (char *line,
 			grub_reader_getline_t getline, void *getline_data)
@@ -32,6 +37,31 @@ grub_normal_parse_line (char *line,
 
   if (parsed_script)
     {
+#ifdef TCG
+      {
+	grub_uint32_t sizeline;
+	grub_uint32_t res;
+			
+#ifdef DEBUG
+	grub_printf("Extended [CONF] : %s\n", line);
+	grub_getkey();
+#endif
+			
+	sizeline = grub_strlen(line) + 1;
+			
+	res = TCG_HashLogExtendEvent((grub_uint8_t *) line, sizeline, TCG_GRUB_CONF_PCR_INDEX, TCG_GRUB_CONF_PCR_EVENTTYPE, line, sizeline);
+	if(res && (res != TCGERR_ERROR_NOTPM)) {
+	  grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n", line, sizeline, TCG_GRUB_CONF_PCR_INDEX, TCG_GRUB_CONF_PCR_EVENTTYPE, line, sizeline, res);
+	  grub_getkey();
+	}
+	/*res = TCG_CompactHashLogExtendEvent((grub_uint8_t *) line, sizeline, TCG_GRUB_CONF_PCR_INDEX, TCG_GRUB_CONF_PCR_EVENTTYPE);
+	  if(res) {
+	  grub_printf ("TCG_CompactHashLogExtendEvent returns %x ...\n", res);
+	  grub_getkey();
+	  }*/
+      }
+#endif // TCG
+	
       /* Execute the command(s).  */
       grub_script_execute (parsed_script);
 

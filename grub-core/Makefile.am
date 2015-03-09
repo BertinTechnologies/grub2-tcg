@@ -256,6 +256,11 @@ KERNEL_HEADER_FILES += $(top_srcdir)/include/grub/libpciaccess.h
 endif
 endif
 
+if COND_TCG
+KERNEL_HEADER_FILES += $(top_srcdir)/include/opendtex/tpm.h
+KERNEL_HEADER_FILES += $(top_srcdir)/include/grub/i386/tsc.h
+endif
+
 symlist.h: $(top_builddir)/config.h $(KERNEL_HEADER_FILES)
 	@list='$^'; \
 	for p in $$list; do \
