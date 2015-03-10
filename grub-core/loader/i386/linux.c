@@ -1046,9 +1046,14 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
     grub_getkey();
 #endif
 
-    res = TCG_HashLogExtendEvent((grub_uint8_t *) prot_mode_mem, len, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1);
+    res = TCG_HashLogExtendEvent((grub_uint8_t *) prot_mode_mem, len,
+				 TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
+				 argv[0], grub_strlen(argv[0]) + 1);
     if(res && (res != TCGERR_ERROR_NOTPM)) {
-      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n", (grub_uint8_t *) prot_mode_mem, len, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1, res);
+      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n",
+		   (grub_uint8_t *) prot_mode_mem, len,
+		   TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
+		   argv[0], grub_strlen(argv[0]) + 1, res);
       grub_getkey();
     }
 
@@ -1057,9 +1062,14 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
     grub_getkey();
 #endif
 
-    res = TCG_HashLogExtendEvent((grub_uint8_t *) cmdline, cmdline_size, TCG_GRUB_CONFSEC_PCR_INDEX, TCG_GRUB_CONFSEC_PCR_EVENTTYPE, cmdline, cmdline_size);
+    res = TCG_HashLogExtendEvent((grub_uint8_t *) cmdline, cmdline_size,
+				 TCG_GRUB_CONFSEC_PCR_INDEX, TCG_GRUB_CONFSEC_PCR_EVENTTYPE,
+				 cmdline, cmdline_size);
     if(res && (res != TCGERR_ERROR_NOTPM)) {
-      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n", (grub_uint8_t *) cmdline, cmdline_size, TCG_GRUB_CONFSEC_PCR_INDEX, TCG_GRUB_CONFSEC_PCR_EVENTTYPE, cmdline, cmdline_size, res);
+      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n",
+		   (grub_uint8_t *) cmdline, cmdline_size,
+		   TCG_GRUB_CONFSEC_PCR_INDEX, TCG_GRUB_CONFSEC_PCR_EVENTTYPE,
+		   cmdline, cmdline_size, res);
       grub_getkey();
     }
   }
@@ -1173,9 +1183,13 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
     grub_getkey();
 #endif
 		
-    res = TCG_HashLogExtendEvent((grub_uint8_t *) initrd_mem_target, size, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1);
+    res = TCG_HashLogExtendEvent((grub_uint8_t *) initrd_mem_target, size,
+				 TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
+				 argv[0], grub_strlen(argv[0]) + 1);
     if(res && (res != TCGERR_ERROR_NOTPM)) {
-      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n", (grub_uint8_t *) initrd_mem_target, size, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1, res);
+      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n",
+		   (grub_uint8_t *) initrd_mem_target, size, TCG_GRUB_CODE_PCR_INDEX,
+		   TCG_GRUB_CODE_PCR_EVENTTYPE, argv[0], grub_strlen(argv[0]) + 1, res);
       grub_getkey();
     }
   }

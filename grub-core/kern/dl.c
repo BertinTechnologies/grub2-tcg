@@ -646,28 +646,28 @@ grub_dl_load_core_noinit (void *addr, grub_size_t size)
   grub_dl_flush_cache (mod);
 
 #ifdef TCG
-	{
-		grub_uint32_t res;
+  {
+    grub_uint32_t res;
 
-                #ifdef DEBUG
-		grub_printf ("Extended [CODE] %s (%p : %x)...\n", mod->name, addr, size);
-		grub_getkey();
-		#endif
+#ifdef DEBUG
+    grub_printf ("Extended [CODE] %s (%p : %x)...\n", mod->name, addr, size);
+    grub_getkey();
+#endif
 
-		res = TCG_HashLogExtendEvent(addr, size,
-					     TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
-					     mod->name, grub_strlen(mod->name) + 1);
-		if(res && (res != TCGERR_ERROR_NOTPM)) {
-			grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n",
-				     addr, size, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
-				     mod->name, grub_strlen(mod->name) + 1, res);
-			grub_getkey();
-		}
-		/*grub_uint32_t res = TCG_CompactHashLogExtendEvent(addr, size, TCG_GRUB_MOD_PCR_INDEX, TCG_GRUB_MOD_PCR_EVENTTYPE);
-		if(res) {
-			grub_printf ("TCG_CompactHashLogExtendEvent returns %x ...\n", res);
-			grub_getkey();
-		}*/
+    res = TCG_HashLogExtendEvent(addr, size,
+				 TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
+				 mod->name, grub_strlen(mod->name) + 1);
+    if(res && (res != TCGERR_ERROR_NOTPM)) {
+      grub_printf ("TCG_HashLogExtendEvent(%p, %x, %u, %u, %s, %u) returns %x ...\n",
+		   addr, size, TCG_GRUB_CODE_PCR_INDEX, TCG_GRUB_CODE_PCR_EVENTTYPE,
+		   mod->name, grub_strlen(mod->name) + 1, res);
+      grub_getkey();
+    }
+    /*grub_uint32_t res = TCG_CompactHashLogExtendEvent(addr, size, TCG_GRUB_MOD_PCR_INDEX, TCG_GRUB_MOD_PCR_EVENTTYPE);
+      if(res) {
+      grub_printf ("TCG_CompactHashLogExtendEvent returns %x ...\n", res);
+      grub_getkey();
+      }*/
   }
 #endif // TCG
 
