@@ -89,7 +89,31 @@ secret (the secret banner).
 
 ## GRUB2 architecture
 
-To complete.
+**Section not complete.**
+
+The two main new modules are :
+* **tss** for Trusted Software Stack
+* **tpmutils** for basic TPM tools 
+
+The SRTM boot implemented in GRUB is composed of 4 group of mesures :
+* Mesure 1 : BIOS extends **PCR4** with the mesure of the MBR (boot.img)
+* Mesure 2 : GRUB extends **PCR8** with the mesures of the executable codes
+```
+- grub-core diskboot.img and kernel.img
+- content of the files loaded by GRUB
+- the loaded kernel
+- the multiboot modules and kernel
+```
+* Mesure 3 : GRUB extends **PCR9** with critical configuration
+```
+- Kernel command line
+- Command line of each multiboot module
+```
+* Mesure 4 : GRUB extends **PCR10** with the command
+
+Complementary module :
+* **txtutils** for Intel TXT tools
+
 
 ## GRUB2 compilation
 
