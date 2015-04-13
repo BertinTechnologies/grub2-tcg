@@ -85,7 +85,8 @@ TSS_RESULT tss_loadkey(BYTE * keyBlob, UINT32 keyBlobLen, char * keyName, char *
 		printf("Error: %s already loaded\n", keyName);
 		return TCS_E_KEY_MISMATCH;
 	}
-	
+
+	grub_memset(&password, 0, sizeof(password));		
 	while(1) {
 		grub_memset(&hashSecret, 0, sizeof(hashSecret));
 		grub_memset(&auth, 0, sizeof(auth));
@@ -101,13 +102,16 @@ TSS_RESULT tss_loadkey(BYTE * keyBlob, UINT32 keyBlobLen, char * keyName, char *
 				return TCS_E_OUTOFMEMORY;
 			}
 			
-			tss_prompt_password("Enter password of parent key:", password, sizeof(password));
-			
-			GRUB_MD_SHA1->init(ctx_sha1);
-			GRUB_MD_SHA1->write(ctx_sha1, password, grub_strlen(password));
-			GRUB_MD_SHA1->final(ctx_sha1);
-			temp = GRUB_MD_SHA1->read(ctx_sha1);
-			grub_memcpy(&hashSecret, temp, sizeof(hashSecret));
+			tss_prompt_password("Enter password of parent key:", password,
+				sizeof(password));
+
+			if(password[0]) {
+				GRUB_MD_SHA1->init(ctx_sha1);
+				GRUB_MD_SHA1->write(ctx_sha1, password, grub_strlen(password));
+				GRUB_MD_SHA1->final(ctx_sha1);
+				temp = GRUB_MD_SHA1->read(ctx_sha1);
+				grub_memcpy(&hashSecret, temp, sizeof(hashSecret));
+			}
 			grub_free(ctx_sha1);
 		}
 	
