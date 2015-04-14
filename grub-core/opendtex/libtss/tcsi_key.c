@@ -58,7 +58,7 @@ TCS_LoadKey2(TPM_KEY_HANDLE * hKey, TPM_KEY_HANDLE hParent, BYTE * keyBlob, UINT
 
 	if(!result) {
 		// Check auth value
-		grub_memset(&ctx_sha1, 0, sizeof(ctx_sha1));
+		grub_memset(ctx_sha1, 0, sizeof(ctx_sha1));
 		GRUB_MD_SHA1->init(ctx_sha1);
 		UINT32ToArray(ordinal, bigendian_ordinal);
 		GRUB_MD_SHA1->write(ctx_sha1, &result, sizeof(TPM_RESULT));

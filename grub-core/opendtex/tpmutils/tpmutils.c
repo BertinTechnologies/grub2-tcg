@@ -25,6 +25,8 @@ GRUB_MOD_LICENSE ("GPLv3+");
 int vga_width 	 = 320;
 int vga_height  = 200;
 
+extern void ListStoredKey(void);
+
 static void
 tpm_print_hash(grub_uint8_t * hash) {
 	grub_uint32_t i;
@@ -254,14 +256,12 @@ grub_cmd_tpm_listkeys(grub_extcmd_context_t ctxt __attribute__ ((unused)),
 		int argc __attribute__ ((unused)),
 		char ** args __attribute__ ((unused)))
 {
-	//TCG_STATUSCHECK 	status;
-	//grub_uint32_t 		ret;
 
 	if(argc > 0) {
 		return GRUB_ERR_BAD_ARGUMENT;
 	}
 
-	//TODO GGX
+	ListStoredKey();
 
 	return GRUB_ERR_NONE;
 }
